@@ -34,8 +34,8 @@ These types have non-obvious mappings that frequently cause bugs:
 | C / Win32 Type | .NET Type | Notes |
 |----------------|-----------|-------|
 | `HANDLE`, `HWND` | `SafeHandle` | Prefer over raw `IntPtr` |
-| `LPWSTR` / `wchar_t*` | `string` | Must specify UTF-16 encoding |
-| `LPSTR` / `char*` | `string` | Must specify ANSI or UTF-8 encoding |
+| `LPWSTR` / `wchar_t*` | `string` | UTF-16 on Windows (lowest cost for `in` strings). Avoid in cross-platform code — `wchar_t` width is compiler-defined (typically UTF-32 on non-Windows) |
+| `LPSTR` / `char*` | `string` | Must specify encoding (ANSI or UTF-8). Always requires marshalling cost for `in` parameters |
 
 ## Blittable Types
 

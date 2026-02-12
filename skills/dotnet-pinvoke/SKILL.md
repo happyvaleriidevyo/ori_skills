@@ -43,6 +43,8 @@ The most dangerous mappings — these cause the majority of bugs:
 | `BOOL` (Win32) | `int` | Not `bool` — Win32 `BOOL` is 4 bytes |
 | `bool` (C99) | `[MarshalAs(UnmanagedType.U1)] bool` | Must specify 1-byte marshal |
 | `HANDLE`, `HWND` | `SafeHandle` | Prefer over raw `IntPtr` |
+| `LPWSTR` / `wchar_t*` | `string` | UTF-16 on Windows (lowest cost for `in` strings). Avoid in cross-platform code — `wchar_t` width is compiler-defined (typically UTF-32 on non-Windows) |
+| `LPSTR` / `char*` | `string` | Must specify encoding (ANSI or UTF-8). Always requires marshalling cost for `in` parameters |
 
 **For the complete type mapping table, struct layout, and blittable type rules**, see [references/type-mapping.md](references/type-mapping.md).
 
