@@ -274,11 +274,13 @@ jobs:
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v4
         continue-on-error: true
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: ${{ env.RESULTS_DIR }}/summary.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo "${{ github.repository }}" \
+            --body-file "${{ env.RESULTS_DIR }}/summary.md"
 
   publish-benchmark:
     needs: evaluate
