@@ -39,7 +39,7 @@ The most dangerous mappings — these cause the majority of bugs:
 | C / Win32 Type | .NET Type | Why |
 |----------------|-----------|-----|
 | `long` | **`CLong`** | 32-bit on Windows, 64-bit on 64-bit Unix. With `LibraryImport`, requires `[assembly: DisableRuntimeMarshalling]` |
-| `size_t` | `nuint` | Pointer-sized. Never use `ulong` |
+| `size_t` | `nuint` / `UIntPtr` | Pointer-sized. Use `nuint` on .NET 8+ and `UIntPtr` on earlier .NET. Never use `ulong` |
 | `BOOL` (Win32) | `int` | Not `bool` — Win32 `BOOL` is 4 bytes |
 | `bool` (C99) | `[MarshalAs(UnmanagedType.U1)] bool` | Must specify 1-byte marshal |
 | `HANDLE`, `HWND` | `SafeHandle` | Prefer over raw `IntPtr` |
@@ -61,7 +61,7 @@ int32_t process_records(const Record* records, size_t count, uint32_t* out_proce
 ```csharp
 [DllImport("mylib")]
 private static extern int ProcessRecords(
-    [In] Record[] records, nuint count, out uint outProcessed);
+    [In] Record[] records, UIntPtr count, out uint outProcessed);
 ```
 
 **LibraryImport:**
@@ -91,7 +91,7 @@ If the managed method name differs from the native export name, specify `EntryPo
 // DllImport
 [DllImport("mylib", EntryPoint = "process_records")]
 private static extern int ProcessRecords(
-    [In] Record[] records, nuint count, out uint outProcessed);
+    [In] Record[] records, UIntPtr count, out uint outProcessed);
 
 // LibraryImport
 [LibraryImport("mylib", EntryPoint = "process_records")]

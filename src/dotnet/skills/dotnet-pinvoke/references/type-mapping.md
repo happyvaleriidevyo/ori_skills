@@ -23,7 +23,7 @@ These types have non-obvious mappings that frequently cause bugs:
 | C / Win32 Type | .NET Type | Why It's Dangerous |
 |----------------|-----------|-------------------|
 | `long` | **`CLong`** | C `long` is 32-bit on Windows, 64-bit on 64-bit Unix — never use `int` or `long`. With `LibraryImport`, requires `[assembly: DisableRuntimeMarshalling]` or you get SYSLIB1051. With `DllImport`, works without it |
-| `size_t` | `nuint` | Pointer-sized. Never use `ulong` — causes stack corruption on 32-bit |
+| `size_t` | `nuint` / `UIntPtr` | Pointer-sized. Use `nuint` on .NET 8+ and `UIntPtr` on earlier .NET. Never use `ulong` — causes stack corruption on 32-bit |
 | `intptr_t` | `nint` | Pointer-sized |
 | `BOOL` (Win32) | `int` | Not `bool` — Win32 `BOOL` is 4 bytes |
 | `bool` (C99) | `[MarshalAs(UnmanagedType.U1)] bool` | Must specify 1-byte marshal (unless `DisableRuntimeMarshalling` is applied) |

@@ -4,7 +4,7 @@
 
 | Pitfall | Impact | Solution |
 |---------|--------|----------|
-| `int` for `size_t` | Stack corruption on 64-bit | Use `nuint` |
+| `int` for `size_t` | Stack corruption on 64-bit | Use `nuint` (.NET 8+) or `UIntPtr` on older frameworks |
 | `long` for C `long` | Wrong on Windows (32-bit) | Use `CLong` / `CULong` (with `LibraryImport`, requires `[assembly: DisableRuntimeMarshalling]`) |
 | `bool` without `MarshalAs` | Wrong marshal size | Specify `UnmanagedType.Bool` (4B) or `U1` (1B) |
 | Implicit string encoding | Corrupts non-ASCII | Always specify `CharSet` or `StringMarshalling` |
