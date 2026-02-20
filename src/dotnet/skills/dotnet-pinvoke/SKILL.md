@@ -403,5 +403,5 @@ For binding Objective-C libraries (macOS/iOS), use [Objective Sharpie](https://l
 
 ## Reference Files
 
-- **[references/type-mapping.md](references/type-mapping.md)** — Complete native-to-.NET type mapping table, struct layout patterns, blittable type rules
-- **[references/diagnostics.md](references/diagnostics.md)** — Common pitfalls, failure modes and recovery, debugging approach, external resources
+- **[references/type-mapping.md](references/type-mapping.md)** — Complete native-to-.NET type mapping table, struct layout patterns, blittable type rules. **Load when** encountering types not covered in Step 2 above, or when working with struct layout or blittable type questions.
+- **[references/diagnostics.md](references/diagnostics.md)** — Common pitfalls, failure modes and recovery, debugging approach, external resources. **Load when** debugging an existing P/Invoke failure or reviewing interop code for correctness issues.
