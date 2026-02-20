@@ -35,7 +35,7 @@ const scenarioSchema = z.object({
 });
 
 export const evalConfigSchema = z.object({
-  scenarios: z.array(scenarioSchema).min(1, "At least one scenario is required"),
+  scenarios: z.array(scenarioSchema),
 });
 
 export type ParsedEvalConfig = z.infer<typeof evalConfigSchema>;

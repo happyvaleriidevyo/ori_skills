@@ -224,6 +224,11 @@ export async function run(config: ValidatorConfig): Promise<number> {
       continue;
     }
 
+    if (skill.evalConfig.scenarios.length === 0) {
+      console.log(`⏭  Skipping ${skill.name} (eval.yaml has no scenarios)`);
+      continue;
+    }
+
     console.log(`🔍 Evaluating ${skill.name}...`);
 
     // Static skill profile analysis

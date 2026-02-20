@@ -28,8 +28,9 @@ describe("parseEvalConfig", () => {
     expect(config.scenarios[0].timeout).toBe(120);
   });
 
-  it("rejects empty scenarios", () => {
-    expect(() => parseEvalConfig({ scenarios: [] })).toThrow();
+  it("accepts empty scenarios", () => {
+    const result = parseEvalConfig({ scenarios: [] });
+    expect(result.scenarios).toEqual([]);
   });
 
   it("rejects missing prompt", () => {
@@ -94,7 +95,7 @@ describe("validateEvalConfig", () => {
   });
 
   it("returns errors for invalid config", () => {
-    const result = validateEvalConfig({ scenarios: [] });
+    const result = validateEvalConfig({ scenarios: "not-an-array" });
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.errors.length).toBeGreaterThan(0);
