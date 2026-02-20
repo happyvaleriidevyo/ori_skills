@@ -26,7 +26,7 @@ These types have non-obvious mappings that frequently cause bugs:
 | `size_t` | `nuint` / `UIntPtr` | Pointer-sized. Use `nuint` on .NET 8+ and `UIntPtr` on earlier .NET. Never use `ulong` — causes stack corruption on 32-bit |
 | `intptr_t` | `nint` | Pointer-sized |
 | `BOOL` (Win32) | `int` | Not `bool` — Win32 `BOOL` is 4 bytes |
-| `bool` (C99) | `[MarshalAs(UnmanagedType.U1)] bool` | Must specify 1-byte marshal (unless `DisableRuntimeMarshalling` is applied) |
+| `bool` (C99) | `[MarshalAs(UnmanagedType.U1)] bool` | Must specify 1-byte marshal |
 | `void*` | `void*` | Requires `unsafe` context |
 
 ## Handle and String Types
