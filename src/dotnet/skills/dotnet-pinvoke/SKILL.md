@@ -18,6 +18,8 @@ This skill covers both `DllImport` (available since .NET Framework 1.0) and `Lib
 | Target platforms | Recommended | Affects type sizes (`long`, `size_t`) and library naming |
 | Memory ownership contract | Yes | Who allocates and who frees each buffer or handle |
 
+**Agent behavior:** When documentation and native headers diverge, always trust the header. Online documentation (including official Win32 API docs) frequently omits or simplifies details about types, calling conventions, and struct layout that are critical for correct P/Invoke signatures.
+
 ---
 
 ## Workflow
@@ -240,7 +242,7 @@ Marshal.ThrowExceptionForHR(hr);
 
 ### Step 8: Handle Callbacks (if needed)
 
-**Preferred (.NET 5+): `UnmanagedCallersOnly`** — avoids delegates entirely, no GC lifetime risk:
+**Preferred (.NET 8+): `UnmanagedCallersOnly`** — avoids delegates entirely, no GC lifetime risk:
 
 ```csharp
 [UnmanagedCallersOnly]
