@@ -1,6 +1,10 @@
+import { exec as execCb } from "node:child_process";
 import { mkdtemp, cp, writeFile, mkdir, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve, sep } from "node:path";
+import { promisify } from "node:util";
+
+const execAsync = promisify(execCb);
 import type {
   CopilotClient,
   CopilotClientOptions,
@@ -14,6 +18,7 @@ import type {
   RunMetrics,
   AgentEvent,
   SkillInfo,
+  MCPServerDef,
 } from "./types.js";
 import { collectMetrics } from "./metrics.js";
 
@@ -58,6 +63,18 @@ async function setupWorkDir(
       } else if (file.source && skillPath) {
         const sourcePath = join(skillPath, file.source);
         await cp(sourcePath, targetPath);
+      }
+    }
+  }
+
+  // Run setup commands (e.g. build to produce a binlog, then strip sources)
+  if (scenario.setup?.commands) {
+    for (const cmd of scenario.setup.commands) {
+      try {
+        await execAsync(cmd, { cwd: workDir, timeout: 120_000 });
+      } catch {
+        // Setup commands may return non-zero exit codes
+        // (e.g. building a broken project to produce a binlog)
       }
     }
   }
@@ -117,9 +134,28 @@ export function checkPermission(
 export function buildSessionConfig(
   skill: SkillInfo | null,
   model: string,
-  workDir: string
+  workDir: string,
+  mcpServers?: Record<string, MCPServerDef>
 ): SessionConfig {
   const skillPath = skill ? dirname(skill.path) : undefined;
+  // Convert MCPServerDef records to the SDK's MCPServerConfig shape.
+  // MCPServerDef already aligns with MCPLocalServerConfig (type, command, args,
+  // tools, env, cwd) so a cast is sufficient.
+  const sdkMcp = mcpServers
+    ? (Object.fromEntries(
+        Object.entries(mcpServers).map(([name, def]) => [
+          name,
+          {
+            type: (def.type ?? "stdio") as "local" | "stdio",
+            command: def.command,
+            args: def.args,
+            tools: def.tools ?? ["*"],
+            ...(def.env ? { env: def.env } : {}),
+            ...(def.cwd ? { cwd: def.cwd } : {}),
+          },
+        ])
+      ) as SessionConfig["mcpServers"])
+    : undefined;
   return {
     model,
     streaming: true,
@@ -128,6 +164,7 @@ export function buildSessionConfig(
     // Point configDir at workDir so the SDK won't discover user-installed
     // skills from ~/.github/skills/, ~/.copilot/config/skills/, etc.
     configDir: workDir,
+    ...(sdkMcp ? { mcpServers: sdkMcp } : {}),
     infiniteSessions: { enabled: false },
     onPermissionRequest: async (req: PermissionRequest) => {
       return checkPermission(req, workDir, skillPath);
@@ -152,7 +189,7 @@ export async function runAgent(options: RunOptions): Promise<RunMetrics> {
     const client = await getSharedClient(verbose);
 
     const session = await client.createSession(
-      buildSessionConfig(skill, model, workDir)
+      buildSessionConfig(skill, model, workDir, skill?.mcpServers)
     );
 
     try {

@@ -1,3 +1,12 @@
+export interface MCPServerDef {
+  type?: string;
+  command: string;
+  args: string[];
+  tools?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+}
+
 export interface SkillInfo {
   name: string;
   description: string;
@@ -6,6 +15,7 @@ export interface SkillInfo {
   skillMdContent: string;
   evalPath: string | null;
   evalConfig: EvalConfig | null;
+  mcpServers?: Record<string, MCPServerDef>;
 }
 
 export interface EvalConfig {
@@ -28,6 +38,12 @@ export interface EvalScenario {
 export interface SetupConfig {
   copy_test_files?: boolean;
   files?: SetupFile[];
+  /**
+   * Shell commands to run in the working directory after files are copied
+   * but before the agent starts. Non-zero exit codes are tolerated
+   * (e.g. building a broken project to produce a binlog).
+   */
+  commands?: string[];
 }
 
 export interface SetupFile {
