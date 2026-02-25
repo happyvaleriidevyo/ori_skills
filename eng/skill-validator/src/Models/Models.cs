@@ -198,6 +198,7 @@ public sealed class ScenarioComparison
     public PairwiseJudgeResult? PairwiseResult { get; init; }
     public IReadOnlyList<double>? PerRunScores { get; set; }
     public SkillActivationInfo? SkillActivation { get; set; }
+    public bool TimedOut { get; set; }
 }
 
 // --- Verdict ---
