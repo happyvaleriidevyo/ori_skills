@@ -19,49 +19,48 @@ Plugging into your CI, it ensures every new skill adds real value, and existing 
 
 ## Prerequisites
 
-- Node.js >= 22
+- .NET 10 SDK or later
 - Authenticated with GitHub via `gh auth login` (the SDK picks up your credentials automatically)
 
-## Install
+## Build
 
 ```bash
-npm install
-npm run build
-npm link        # makes `skill-validator` available globally
+cd eng/skill-validator
+dotnet build
 ```
 
 ## Usage
 
 ```bash
 # Validate all skills in a directory
-skill-validator ./path/to/skills/
+dotnet run --project src/SkillValidator -- ./path/to/skills/
 
 # Validate a single skill
-skill-validator ./path/to/my-skill/
+dotnet run --project src/SkillValidator -- ./path/to/my-skill/
 
 # Verbose output with per-scenario breakdowns
-skill-validator --verbose ./skills/
+dotnet run --project src/SkillValidator -- --verbose ./skills/
 
 # Custom model and threshold
-skill-validator --model claude-sonnet-4.5 --min-improvement 0.2 ./skills/
+dotnet run --project src/SkillValidator -- --model claude-sonnet-4.5 --min-improvement 0.2 ./skills/
 
 # Use a different model for judging vs agent runs
-skill-validator --model gpt-5.3-codex --judge-model claude-opus-4.6-fast ./skills/
+dotnet run --project src/SkillValidator -- --model gpt-5.3-codex --judge-model claude-opus-4.6-fast ./skills/
 
 # Multiple runs for stability
-skill-validator --runs 5 ./skills/
+dotnet run --project src/SkillValidator -- --runs 5 ./skills/
 
 # Override the default results directory (.skill-validator-results)
-skill-validator --results-dir ./my-results ./skills/
+dotnet run --project src/SkillValidator -- --results-dir ./my-results ./skills/
 
 # File reporters can also be specified explicitly.
-skill-validator --reporter junit ./skills/
+dotnet run --project src/SkillValidator -- --reporter junit ./skills/
 
 # Require all skills to have evals
-skill-validator --require-evals ./skills/
+dotnet run --project src/SkillValidator -- --require-evals ./skills/
 
 # Verdict-warn-only mode (verdict failures return exit 0, execution errors still fail)
-skill-validator --verdict-warn-only --require-evals ./skills/
+dotnet run --project src/SkillValidator -- --verdict-warn-only --require-evals ./skills/
 ```
 
 ## Writing eval files
@@ -259,8 +258,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-      - run: npx skill-validator --require-evals --verdict-warn-only .
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet run --project eng/skill-validator/src/SkillValidator -- --require-evals --verdict-warn-only .
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -270,22 +271,13 @@ jobs:
 When evaluating multiple components in parallel CI matrix jobs, use the `consolidate` subcommand to merge individual `results.json` files into a single markdown summary:
 
 ```bash
-skill-validator consolidate --output summary.md results1.json results2.json
+dotnet run --project src/SkillValidator -- consolidate --output summary.md results1.json results2.json
 
 # Or use find/glob to discover files
-skill-validator consolidate --output summary.md $(find ./all-results/ -name results.json)
+dotnet run --project src/SkillValidator -- consolidate --output summary.md $(find ./all-results/ -name results.json)
 ```
 
 | Flag | Description |
 |------|-------------|
 | `<files...>` | Paths to `results.json` files to merge |
 | `--output <path>` | Output file path for the consolidated markdown |
-
-## Development
-
-```bash
-npm test          # Run unit tests
-npm run test:watch # Watch mode
-npm run lint      # Type check
-npm run build     # Compile TypeScript
-```
