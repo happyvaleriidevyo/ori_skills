@@ -27,7 +27,7 @@
 #   Imports:
 #     - ../aw/shared/devops-investigate.lock.md
 #
-# frontmatter-hash: afdacb988a7ab79bb8537fcd175819299fa196e7e699b8cbd9b61d7e8654d651
+# frontmatter-hash: 5b8738f8521ef937e574be82157a4f4c2c9486220672ef91c4cd719255ba12be
 
 name: "DevOps Health — Deep Investigation"
 "on":
@@ -58,7 +58,7 @@ name: "DevOps Health — Deep Investigation"
 permissions: {}
 
 concurrency:
-  group: "gh-aw-${{ github.workflow }}"
+  group: gh-aw-${{ github.workflow }}-${{ inputs.finding_id }}
 
 run-name: "DevOps Health — Deep Investigation"
 
