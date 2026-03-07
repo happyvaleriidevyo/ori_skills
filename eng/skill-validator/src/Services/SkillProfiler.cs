@@ -15,6 +15,7 @@ public sealed record SkillProfile(
     bool HasWhenToUse,
     bool HasWhenNotToUse,
     int ResourceFileCount,
+    IReadOnlyList<string> Errors,
     IReadOnlyList<string> Warnings);
 
 public static partial class SkillProfiler
@@ -23,6 +24,11 @@ public static partial class SkillProfiler
     private const int TokenSweetLow = 200;
     private const int TokenSweetHigh = 2500;
     private const int TokenWarnHigh = 5000;
+    internal const int MaxDescriptionLength = 1024;
+    internal const int MaxAggregateDescriptionLength = 15_000;
+    private const int MaxNameLength = 64;
+    private const int MaxCompatibilityLength = 500;
+    private const int MaxBodyLines = 500;
 
     public static SkillProfile AnalyzeSkill(SkillInfo skill)
     {
@@ -53,8 +59,72 @@ public static partial class SkillProfiler
         int resourceFileCount = skill.EvalConfig?.Scenarios
             .Sum(s => s.Setup?.Files?.Count ?? 0) ?? 0;
 
+        var errors = new List<string>();
         var warnings = new List<string>();
 
+        // --- agentskills.io spec: name validation ---
+        ValidateName(skill.Name, Path.GetFileName(skill.Path), warnings);
+
+        // --- agentskills.io spec: description validation ---
+        if (skill.Description.Length > MaxDescriptionLength)
+        {
+            errors.Add($"Skill description is {skill.Description.Length:N0} characters — maximum is {MaxDescriptionLength:N0}. Shorten the description in SKILL.md frontmatter.");
+        }
+        else if (skill.Description.Length == 0 && hasFrontmatter)
+        {
+            warnings.Add("YAML frontmatter has no description — agents use description for skill discovery.");
+        }
+
+        // --- agentskills.io spec: compatibility field ---
+        if (skill.Compatibility is { Length: > MaxCompatibilityLength })
+        {
+            warnings.Add($"Compatibility field is {skill.Compatibility.Length} characters — maximum is {MaxCompatibilityLength}.");
+        }
+
+        // --- agentskills.io spec: body line count ---
+        var trimmedBody = body.TrimEnd('\r', '\n');
+        int bodyLineCount = trimmedBody.Length == 0 ? 0 : trimmedBody.Split('\n').Length;
+        if (bodyLineCount > MaxBodyLines)
+        {
+            errors.Add($"SKILL.md body is {bodyLineCount} lines — maximum is {MaxBodyLines}. Move detailed reference material to separate files.");
+        }
+
+        // --- agentskills.io spec: file reference depth ---
+        foreach (Match refMatch in FileRefRegex().Matches(body))
+        {
+            var refPath = refMatch.Groups[1].Value;
+            if (refPath.StartsWith("http", StringComparison.OrdinalIgnoreCase) || refPath.StartsWith('#'))
+                continue;
+
+            // Strip fragment anchors (e.g. "file.md#section")
+            int fragmentIndex = refPath.IndexOf('#');
+            if (fragmentIndex >= 0)
+                refPath = refPath[..fragmentIndex];
+            if (refPath.Length == 0)
+                continue;
+
+            // Normalize: trim leading "./"
+            if (refPath.StartsWith("./"))
+                refPath = refPath[2..];
+
+            var segments = refPath.Split('/');
+
+            // Reject parent-directory traversals
+            if (segments.Any(s => s == ".."))
+            {
+                errors.Add($"File reference '{refMatch.Groups[1].Value}' uses parent-directory traversal — references must stay within the skill directory.");
+                continue;
+            }
+
+            // Depth = directory segments only (exclude filename)
+            int dirDepth = segments.Length - 1;
+            if (dirDepth > 1) // e.g. "references/deep/file.md" = dirDepth 2
+            {
+                errors.Add($"File reference '{refMatch.Groups[1].Value}' is {dirDepth} directories deep — maximum is 1 level from SKILL.md.");
+            }
+        }
+
+        // --- Token size warnings ---
         if (tokenCount > TokenWarnHigh)
         {
             warnings.Add(
@@ -107,7 +177,26 @@ public static partial class SkillProfiler
             HasWhenToUse: hasWhenToUse,
             HasWhenNotToUse: hasWhenNotToUse,
             ResourceFileCount: resourceFileCount,
+            Errors: errors,
             Warnings: warnings);
+    }
+
+    internal static void ValidateName(string name, string directoryName, List<string> warnings)
+    {
+        if (name.Length > MaxNameLength)
+            warnings.Add($"Skill name '{name}' is {name.Length} characters — maximum is {MaxNameLength}.");
+
+        if (!NameFormatRegex().IsMatch(name))
+            warnings.Add($"Skill name '{name}' contains invalid characters — must be lowercase alphanumeric and hyphens only.");
+
+        if (name.StartsWith('-') || name.EndsWith('-'))
+            warnings.Add($"Skill name '{name}' starts or ends with a hyphen.");
+
+        if (name.Contains("--"))
+            warnings.Add($"Skill name '{name}' contains consecutive hyphens.");
+
+        if (!string.Equals(name, directoryName, StringComparison.Ordinal))
+            warnings.Add($"Skill name '{name}' does not match directory name '{directoryName}'.");
     }
 
     public static string FormatProfileLine(SkillProfile profile)
@@ -157,4 +246,10 @@ public static partial class SkillProfiler
 
     [GeneratedRegex(@"^#{1,4}\s+when\s+not\s+to\s+use", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
     private static partial Regex WhenNotToUseRegex();
+
+    [GeneratedRegex(@"^[a-z0-9-]+$")]
+    private static partial Regex NameFormatRegex();
+
+    [GeneratedRegex(@"\]\(([^)]+)\)")]
+    private static partial Regex FileRefRegex();
 }
