@@ -117,8 +117,8 @@ public sealed record PluginInfo(
     string Name,
     string? Version,
     string? Description,
-    string? SkillsPath,
-    string? AgentsPath,
+    IReadOnlyList<string> SkillPaths,
+    IReadOnlyList<string> AgentPaths,
     string DirectoryPath,
     string DirectoryName);
 
