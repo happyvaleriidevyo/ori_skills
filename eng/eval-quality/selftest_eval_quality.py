@@ -1029,6 +1029,14 @@ def absolute_fixture_destination(d):
     replace_fixture_mapping(d, "dest: sample", f"dest: {destination}")
 
 
+def missing_fixture_destination(d):
+    replace_fixture_mapping(d, "          dest: sample\n", "")
+
+
+def empty_fixture_destination(d):
+    replace_fixture_mapping(d, "dest: sample", "dest:")
+
+
 def traversing_fixture_destination(d):
     replace_fixture_mapping(d, "dest: sample", "dest: ../escaped")
 
@@ -1811,6 +1819,12 @@ results = [
          expect_fail=False),
     case("absolute fixture destination cannot escape workspace",
          absolute_fixture_destination, expect_fail=True),
+    failing_output_case("fixture mapping requires destination",
+                        missing_fixture_destination,
+                        "requires a non-empty string dest"),
+    failing_output_case("fixture mapping rejects empty destination",
+                        empty_fixture_destination,
+                        "requires a non-empty string dest"),
     case("traversing fixture destination cannot escape workspace",
          traversing_fixture_destination, expect_fail=True),
     case("Windows-style fixture destination cannot escape workspace",

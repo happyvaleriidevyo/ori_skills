@@ -403,13 +403,14 @@ preimage no longer exists. The gate materializes each stimulus's declared
 broken oracle. Stimuli whose workspace is created only by commands are not
 checked because their preimage cannot be reconstructed statically.
 
-Materialization is fail-closed. Fixture sources, destinations, and reference
-paths must be relative, cannot contain `..`, and must resolve within their
-declared suite or scratch-workspace root. Fixture and reference symlinks are
-checked explicitly, including links nested inside a contained symlinked
-directory; any link that resolves outside its suite is rejected. These rules
-stop an eval from copying or reading unrelated host files while the gate checks
-a patch.
+Materialization is fail-closed. Each mapping-style `environment.files` entry
+must declare a non-empty string `dest`; otherwise Vally rejects the specification
+before execution. Fixture sources, destinations, and reference paths must also
+be relative, cannot contain `..`, and must resolve within their declared suite
+or scratch-workspace root. Fixture and reference symlinks are checked
+explicitly, including links nested inside a contained symlinked directory; any
+link that resolves outside its suite is rejected. These rules stop an eval from
+copying or reading unrelated host files while the gate checks a patch.
 
 ### 17. Output grader has a patch but no response trajectory
 

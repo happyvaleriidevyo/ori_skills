@@ -51,8 +51,9 @@ FAILS on unambiguous bugs:
  14. Golden trajectory or patch missing on disk. Vally cannot load the oracle.
  15. Golden trajectory or patch not tracked by git. A local run can pass while
      CI receives an eval that points at a file absent from the checkout.
- 16. Golden patch does not apply to the stimulus inputs. A stale patch is a
-     broken reference even when both the fixture and patch exist.
+ 16. Golden patch inputs cannot be materialized as declared. Every fixture
+     mapping needs a non-empty destination, and a stale patch is a broken
+     reference even when both the fixture and patch exist.
  17. Golden patch paired with an output grader but no golden trajectory. The
      patch supplies workspace state, not the reference response that the output
      grader must inspect.
@@ -532,13 +533,17 @@ def check_fixtures(spec: str, doc: dict, tracked: set[str]) -> None:
         for entry in (stim.get("environment") or {}).get("files") or []:
             src = entry.get("src")
             dest = entry.get("dest")
-            if dest:
-                try:
-                    path_within(base, dest)
-                except ValueError as exc:
-                    errors.append(
-                        f"{spec}: '{stim.get('name')}' has unsafe fixture dest {dest!r}: {exc}")
-                    continue
+            if not isinstance(dest, str) or not dest.strip():
+                errors.append(
+                    f"{spec}: '{stim.get('name')}' environment.files mapping requires "
+                    "a non-empty string dest")
+                continue
+            try:
+                path_within(base, dest)
+            except ValueError as exc:
+                errors.append(
+                    f"{spec}: '{stim.get('name')}' has unsafe fixture dest {dest!r}: {exc}")
+                continue
             if not src:
                 continue
             try:
