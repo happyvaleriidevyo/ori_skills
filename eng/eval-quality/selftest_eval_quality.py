@@ -1034,7 +1034,7 @@ def missing_fixture_destination(d):
 
 
 def empty_fixture_destination(d):
-    replace_fixture_mapping(d, "dest: sample", "dest:")
+    replace_fixture_mapping(d, "dest: sample", 'dest: ""')
 
 
 def traversing_fixture_destination(d):
