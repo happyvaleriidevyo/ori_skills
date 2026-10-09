@@ -505,11 +505,12 @@ expected-result voice when neither form of evidence exists. These checks inspect
 both string messages and text inside multipart ATIF content. The gate also
 rejects a complete rubric item copied into the response.
 
-### 23. Environment fixture source has no destination
+### 23. Environment fixture mapping has no destination
 
-Every `environment.files` entry with `src` must also declare a non-empty `dest`. Vally rejects the
-entire eval before loading any stimuli when a destination is omitted, even if the source exists and
-is tracked.
+Every mapping-style `environment.files` entry must declare a non-empty string
+`dest`, at both suite and stimulus scope. Vally rejects the entire eval before
+loading any stimuli when a destination is missing or empty, even if the source
+exists and is tracked.
 
 ## Why the gate scores direction, not magnitude
 

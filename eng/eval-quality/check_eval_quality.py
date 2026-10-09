@@ -529,20 +529,25 @@ def check_symlink_containment(path: str, root: str) -> None:
 
 def check_fixtures(spec: str, doc: dict, tracked: set[str]) -> None:
     base = os.path.dirname(spec)
-    for stim in doc.get("stimuli") or []:
-        for entry in (stim.get("environment") or {}).get("files") or []:
+    fixture_groups = [("suite", doc.get("environment"))]
+    fixture_groups.extend(
+        (f"stimulus {stim.get('name')!r}", stim.get("environment"))
+        for stim in doc.get("stimuli") or []
+    )
+    for owner, environment in fixture_groups:
+        for entry in (environment or {}).get("files") or []:
             src = entry.get("src")
             dest = entry.get("dest")
             if not isinstance(dest, str) or not dest.strip():
                 errors.append(
-                    f"{spec}: '{stim.get('name')}' environment.files mapping requires "
+                    f"{spec}: {owner} environment.files mapping requires "
                     "a non-empty string dest")
                 continue
             try:
                 path_within(base, dest)
             except ValueError as exc:
                 errors.append(
-                    f"{spec}: '{stim.get('name')}' has unsafe fixture dest {dest!r}: {exc}")
+                    f"{spec}: {owner} has unsafe fixture dest {dest!r}: {exc}")
                 continue
             if not src:
                 continue
@@ -551,24 +556,24 @@ def check_fixtures(spec: str, doc: dict, tracked: set[str]) -> None:
                 check_symlink_containment(resolved, fixture_containment_root(resolved, base))
             except (OSError, ValueError) as exc:
                 errors.append(
-                    f"{spec}: '{stim.get('name')}' has unsafe fixture src {src!r}: {exc}")
+                    f"{spec}: {owner} has unsafe fixture src {src!r}: {exc}")
                 continue
             if not os.path.exists(resolved):
-                errors.append(f"{spec}: '{stim.get('name')}' references missing fixture {src}")
+                errors.append(f"{spec}: {owner} references missing fixture {src}")
                 continue
             fixture_files = files_under(resolved)
             if (os.path.isdir(resolved)
                     and not any(os.path.isfile(f) and not os.path.islink(f)
                                 for f in fixture_files)):
                 errors.append(
-                    f"{spec}: '{stim.get('name')}' references fixture directory {src!r} "
+                    f"{spec}: {owner} references fixture directory {src!r} "
                     "without materializable tracked content; git does not preserve "
                     "empty directories or empty symlink targets")
                 continue
             untracked = [f for f in fixture_files if f not in tracked]
             if untracked:
                 errors.append(
-                    f"{spec}: '{stim.get('name')}' references fixture files not tracked by git "
+                    f"{spec}: {owner} references fixture files not tracked by git "
                     f"(they will not exist in CI): {untracked[:3]}")
 
 
